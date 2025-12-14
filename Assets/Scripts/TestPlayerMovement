@@ -1,0 +1,317 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+using System.Collections;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public enum PlayerState { Idle, Running, Jumping, Falling, Dashing}
+    public PlayerState currentState = PlayerState.Falling;
+    public GameManager gameManager;
+
+    [Header("General Settings")]
+    float currMultIncrease = 1f;
+    public Rigidbody2D rb;
+    Animator animator;
+
+    [Header("Movement Settings")]
+    public float moveSpeed = 3f;
+    float horizontalMovement;
+    public bool isFacingRight = true;
+
+    [Header("Jump Settings")]
+    public float jumpPower = 5f;
+    int jumpCount = 0;
+    public int maxJumps = 2;
+    bool isJumping = false;
+
+    [Header("Dash Settings")]
+    public float dashPower = 5f;
+    public int dashDamage = 25;
+    public float dashDuration = 0.2f;
+    public float dashCooldown = 1f;
+    private Vector2 moveInput;
+    private Vector2 dashDirection;
+    private float dashTimer = 0f;
+    private float lastDashTime = -Mathf.Infinity;
+
+    [Header("Ground Check")]
+    public Transform groundCheckPos;
+    public Vector2 groundCheckSize = new Vector2(0.5f, 0.5f);
+    public LayerMask groundLayer;
+    private bool wasGrounded = false;
+
+
+    [Header("Wall Check")]
+    public Transform wallCheckPos;
+    public Vector2 wallCheckSize = new Vector2(0.5f, 0.5f);
+    public LayerMask wallLayer;
+
+    [Header("Gravity")]
+    public float baseGravity = 2f;
+    public float maxFallSpeed = 7f;
+    public float fallSpeedMultiplier = 2f;
+
+    [Header("WallMovement")]
+    public float wallSlideSpeed = 2f;
+
+    // wall jumping
+    float wallJumpDirection;
+    float wallJumpTime = 0.5f;
+    float wallJumpTimer;
+    public Vector2 wallJumpPower = new Vector2(5f, 10f);
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+
+        gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
+
+        StartCoroutine(IncrementMult());
+
+    }
+
+    void Update()
+    {
+        
+    switch (currentState)
+        {
+            case PlayerAnimState.Idle:
+                animator.Play("Idle");
+                break;
+            case PlayerAnimState.Running:
+                animator.Play("Run");
+                break;
+            case PlayerAnimState.Jumping:
+                animator.Play("Jump");
+                break;
+            case PlayerAnimState.Falling:
+                animator.Play("Fall");
+                break;
+            case PlayerAnimState.Dashing:
+                animator.Play("Dash");
+                break;
+        }
+
+        // Cache ground state for consistent use this frame
+        wasGrounded = isGrounded;
+        isGrounded = IsGrounded();
+
+        // detect landing 
+        if (isGrounded && !wasGrounded)
+        {
+            jumpCount = 0;
+            isJumping = false;
+            animator.SetBool("isJumping", false);
+            gameManager.DisplayAndResetScore();
+        }
+
+        // Handle fall gravity
+        ApplyGravity();
+
+        if (rb.velocity.y <= 0 && isJumping)
+        {
+            isJumping = false;
+            animator.SetBool("isJumping", false);
+        }
+
+        // check is wall sliding
+        ProcessWallSlide();
+
+        // check if wall jump
+        ProcessWallJump();
+
+
+        if (!isWallJumping && !isDashing)
+        {
+            // Apply horizontal movement
+            rb.velocity = new Vector2(horizontalMovement * moveSpeed, rb.velocity.y);
+
+            // check if sprite needs to be flipped
+            Flip();
+        }
+
+        if (isDashing)
+        {
+            rb.velocity = dashDirection * dashPower;
+            dashTimer -= Time.deltaTime;
+            if (dashTimer <= 0f)
+            {
+                isDashing = false;
+                rb.gravityScale = baseGravity; 
+            }
+
+            return; // Prevent regular movement from interfering
+        }
+
+    }
+
+    void ApplyGravity()
+    {
+        if (rb.velocity.y < 0)
+        {
+            rb.gravityScale = baseGravity * fallSpeedMultiplier;
+            rb.velocity = new Vector2(rb.velocity.x, Mathf.Max(rb.velocity.y, -maxFallSpeed));
+        }
+        else
+        {
+            rb.gravityScale = baseGravity;
+        }
+    }
+
+    private void GroundCheck()
+    {
+        if (IsGrounded())
+        {
+            jumpCount = 0;
+            isGrounded = true;
+            isJumping = false;
+        }
+        else
+        {
+            isGrounded = false;
+        }
+    }
+
+    private bool WallCheck()
+    {
+        return Physics2D.OverlapBox(wallCheckPos.position, wallCheckSize, 0f, wallLayer);
+    }
+
+    public void Move(InputAction.CallbackContext context)
+    {
+        moveInput = context.ReadValue<Vector2>();
+        horizontalMovement = moveInput.x;
+    }
+
+    public void Jump(InputAction.CallbackContext context)
+    {
+        if (context.performed && jumpCount < maxJumps)
+        {
+            jumpCount++;
+            rb.velocity = new Vector2(rb.velocity.x, jumpPower);
+            isJumping = true;
+            animator.SetBool("isJumping", isJumping);
+        }
+
+        if (context.performed && wallJumpTimer > 0f)
+        {
+            isWallJumping = true;
+            isJumping = true;
+            rb.velocity = new Vector2(wallJumpDirection * wallJumpPower.x, wallJumpPower.y);
+            animator.SetBool("isJumping", isJumping);
+            wallJumpTimer = 0;
+
+            if (transform.localScale.x != wallJumpDirection)
+            {
+                isFacingRight = !isFacingRight;
+                Vector3 ls = transform.localScale;
+                ls.x *= -1f;
+                transform.localScale = ls;
+            }
+
+            Invoke(nameof(CancelWallJump), wallJumpTime + 0.1f);
+        }
+    }
+
+    public void Dash(InputAction.CallbackContext context)
+    {
+        if (context.performed && !isDashing && Time.time >= lastDashTime + dashCooldown)
+        {
+            dashDirection = moveInput.normalized;
+
+            if (dashDirection != Vector2.zero)
+            {
+                isDashing = true;
+                dashTimer = dashDuration;
+                lastDashTime = Time.time;
+
+                rb.gravityScale = 0f; // remove gravity during dash
+                rb.velocity = dashDirection * dashPower;
+            }
+        }
+    }
+
+    private void ProcessWallSlide()
+    {
+        if (!isGrounded && WallCheck() && horizontalMovement != 0)
+        {
+            isWallSliding = true;
+            rb.velocity = new Vector2(rb.velocity.x, Mathf.Max(rb.velocity.y, -wallSlideSpeed));
+        }
+        else
+        {
+            isWallSliding = false;
+        }
+    }
+
+    private void ProcessWallJump()
+    {
+        if (isWallSliding)
+        {
+            isWallJumping = false;
+            wallJumpDirection = -transform.localScale.x;
+            wallJumpTimer = wallJumpTime;
+
+            CancelInvoke(nameof(CancelWallJump));
+        }
+        else if (wallJumpTimer > 0f)
+        {
+            wallJumpTimer -= Time.deltaTime;
+        }
+    }
+
+    private void CancelWallJump()
+    {
+        isWallJumping = false;
+    }
+
+    public void Flip()
+    {
+        if (isFacingRight && horizontalMovement < 0 || !isFacingRight && horizontalMovement > 0)
+        {
+            isFacingRight = !isFacingRight;
+            Vector3 ls = transform.localScale;
+            ls.x *= -1f;
+            transform.localScale = ls;
+        }
+    }
+
+    public void ReduceDashCooldown()
+    {
+        Debug.Log("Killed enemy set dash to 0");
+        lastDashTime = -0.01f;
+    }
+    
+    private bool IsGrounded()
+    {
+        return Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0f, groundLayer);
+    }
+
+    IEnumerator IncrementMult()
+    {
+        while (true)
+        {
+            // Only increase multiplier if player is in air (not grounded and not dashing)
+            if (!isGrounded)
+            {
+                gameManager.IncreaseMultiplier(currMultIncrease);
+                currMultIncrease *= 1.5f;
+            }
+            else
+            {
+                currMultIncrease = 1f;
+            }
+
+            yield return new WaitForSeconds(2f); // Repeat every 1 second
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(groundCheckPos.position, groundCheckSize);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCube(wallCheckPos.position, wallCheckSize);
+    }
+}

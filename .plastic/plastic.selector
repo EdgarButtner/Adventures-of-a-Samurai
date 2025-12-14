@@ -1,0 +1,4 @@
+repository "My project 2025-07-02_15-29-27/Game Studio - Japan@2475090751640@cloud"
+  path "/"
+    br "/main"
+    co "/main"
