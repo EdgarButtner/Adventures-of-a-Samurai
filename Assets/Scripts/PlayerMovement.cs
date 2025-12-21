@@ -12,7 +12,8 @@ public class PlayerMovement : MonoBehaviour
     public GameManager gameManager;
 
     [Header("General Settings")]
-    float currMultIncrease = 1f;
+    private float currMultIncrease = 1f;
+    public float baseMultIncrease = 1f;
     public Transform player;
     public Rigidbody2D rb;
     Animator animator;
@@ -24,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Jump Settings")]
     public float jumpPower = 5f;
-    int jumpCount = 0;
+    public int jumpCount = 0;
     public int maxJumps = 2;
     bool isJumping = false;
 
@@ -83,7 +84,6 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-
         gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 
         // Add mult while in the air
@@ -95,6 +95,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        // Was grounded set to last update grounded check and recheck 
         wasGrounded = isGrounded;
         isGrounded = IsGrounded();
 
@@ -122,7 +123,7 @@ public class PlayerMovement : MonoBehaviour
         ApplyGravity();
 
         // If in jumping state and falling turn of jumping animation and set isJumping to false
-        if (rb.velocity.y <= 0 && isJumping)
+        if (rb.linearVelocity.y <= 0 && isJumping)
         {
             isJumping = false;
             animator.SetBool("isJumping", false);
@@ -136,12 +137,12 @@ public class PlayerMovement : MonoBehaviour
         {
             if (isGliding)
             {
-                rb.velocity = new Vector2(horizontalMovement * glideMoveSpeed, rb.velocity.y);
+                rb.linearVelocity = new Vector2(horizontalMovement * glideMoveSpeed, rb.linearVelocity.y);
                 Flip();
             }
             else
             {
-                rb.velocity = new Vector2(horizontalMovement * moveSpeed, rb.velocity.y);
+                rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
                 Flip();
             }
         }
@@ -149,7 +150,7 @@ public class PlayerMovement : MonoBehaviour
         // If dashing update movement, animations, bools, and timer 
         if (isDashing)
         {
-            rb.velocity = dashDirection * dashPower;
+            rb.linearVelocity = dashDirection * dashPower;
             dashTimer -= Time.deltaTime;
             if (dashTimer <= 0f)
             {
@@ -176,9 +177,9 @@ public class PlayerMovement : MonoBehaviour
 
         if (!isGrounded)
         {
-            if (rb.velocity.y > 0.1f)
+            if (rb.linearVelocity.y > 0.1f)
                 currentState = PlayerState.Jumping;
-            else if (rb.velocity.y < -0.1f)
+            else if (rb.linearVelocity.y < -0.1f)
                 currentState = PlayerState.Falling;
         }
         else if (Mathf.Abs(horizontalMovement) > 0.01f)
@@ -197,9 +198,9 @@ public class PlayerMovement : MonoBehaviour
     void UpdateAnimatorParameters()
     {
         animator.SetBool("isGrounded", isGrounded);
-        animator.SetFloat("xVelocity", Mathf.Abs(rb.velocity.x));
-        animator.SetFloat("yVelocity", rb.velocity.y);
-        animator.SetBool("isDashing", isDashing);
+        animator.SetFloat("xVelocity", Mathf.Abs(rb.linearVelocity.x));
+        animator.SetFloat("yVelocity", rb.linearVelocity.y);
+        animator.SetBool("isDashing", isDashing); 
         animator.SetBool("isWallSliding", isWallSliding);
         animator.SetBool("isRunning", Mathf.Abs(horizontalMovement) > 0.01f && isGrounded);
     }
@@ -212,18 +213,19 @@ public class PlayerMovement : MonoBehaviour
             rb.gravityScale = glideGravityScale;
 
             // Clamp vertical speed so you don't fall too fast
-            if (rb.velocity.y < minGlideFallSpeed)
+            if (rb.
+            linearVelocity.y < minGlideFallSpeed)
             {
-                rb.velocity = new Vector2(rb.velocity.x, minGlideFallSpeed);
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, minGlideFallSpeed);
             }
 
             return;
         }
 
-        if (rb.velocity.y < 0)
+        if (rb.linearVelocity.y < 0)
         {
             rb.gravityScale = baseGravity * fallSpeedMultiplier;
-            rb.velocity = new Vector2(rb.velocity.x, Mathf.Max(rb.velocity.y, -maxFallSpeed));
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, -maxFallSpeed));
         }
         else
         {
@@ -274,7 +276,7 @@ public class PlayerMovement : MonoBehaviour
     private void NormalJump()
     {
         jumpCount++;
-        rb.velocity = new Vector2(rb.velocity.x, jumpPower);
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpPower);
         isJumping = true;
         animator.SetBool("isJumping", true);
     }
@@ -284,7 +286,7 @@ public class PlayerMovement : MonoBehaviour
     {
         isWallJumping = true;
         isJumping = true;
-        rb.velocity = new Vector2(wallJumpDirection * wallJumpPower.x, wallJumpPower.y);
+        rb.linearVelocity = new Vector2(wallJumpDirection * wallJumpPower.x, wallJumpPower.y);
         animator.SetBool("isJumping", true);
         wallJumpTimer = 0;
 
@@ -308,7 +310,7 @@ public class PlayerMovement : MonoBehaviour
                 lastDashTime = Time.time;
 
                 rb.gravityScale = 0f;
-                rb.velocity = dashDirection * dashPower;
+                rb.linearVelocity = dashDirection * dashPower;
 
                 // Override blend tree with dash animation
                 animator.Play("DashAttack");
@@ -329,7 +331,7 @@ public class PlayerMovement : MonoBehaviour
         if (!isGrounded && WallCheck() && horizontalMovement != 0)
         {
             isWallSliding = true;
-            rb.velocity = new Vector2(rb.velocity.x, Mathf.Max(rb.velocity.y, -wallSlideSpeed));
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, -wallSlideSpeed));
         }
         else
         {
@@ -422,6 +424,14 @@ public class PlayerMovement : MonoBehaviour
 
             yield return new WaitForSeconds(0.1f);
         }
+    }
+
+    // Sets the currentPlayerState to the given PlayerState
+    public void SetPlayerState(PlayerState state)
+    {
+        PlayerState prevState = currentState;
+        currentState = state;
+        Debug.Log($"PlayerState changed from {prevState} to {currentState}");
     }
 
     private void OnDrawGizmos()

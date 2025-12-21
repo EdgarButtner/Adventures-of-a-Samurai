@@ -15,18 +15,18 @@ public class Shoot : MonoBehaviour
 
     void Start()
     {
-        npccontroller = GameObject.FindObjectOfType<NPCController>();
+        //npccontroller = GameObject.FindObjectOfType<NPCController>();
     }
 
 
     void Update()
     {
         // If mouse clicked 
-        if (Input.GetMouseButtonDown(0) && Time.time - lastShootTime >= projectileCooldown && !npccontroller.dialogueStarted)
-        {
-            lastShootTime = Time.time;
-            FireProjectile();
-        }
+        //if (Input.GetMouseButtonDown(0) && Time.time - lastShootTime >= projectileCooldown && !npccontroller.dialogueStarted)
+        //{
+            //lastShootTime = Time.time;
+            //FireProjectile();
+        //}
     }
 
     void FireProjectile()

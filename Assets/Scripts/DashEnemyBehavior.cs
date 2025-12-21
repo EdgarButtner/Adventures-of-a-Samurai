@@ -215,12 +215,12 @@ public class DashEnemyBehavior : MonoBehaviour
     IEnumerator DashAttack(Vector2 direction)
     {
         // Start dash
-        rb.velocity = direction * dashPower;
+        rb.linearVelocity = direction * dashPower;
 
         yield return new WaitForSeconds(dashDuration);
 
         // Stop movement
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
 
         yield return new WaitForSeconds(attackCooldown - dashDuration);
 

@@ -46,7 +46,7 @@ public class PlayerHealth : MonoBehaviour
 
         // Disable movement and collisions
         playerMovement.enabled = false;
-        GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+        GetComponent<Rigidbody2D>().linearVelocity  = Vector2.zero;
         GetComponent<Rigidbody2D>().gravityScale = 0;
         GetComponent<Collider2D>().enabled = false;
 

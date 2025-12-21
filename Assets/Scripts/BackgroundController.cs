@@ -1,6 +1,5 @@
 using UnityEngine;
 
-
 //Class to represent the background controller aka the scrolling background.
 public class BackgroundController : MonoBehaviour
 {

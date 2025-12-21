@@ -1,0 +1,20 @@
+To Do:
+
+Outline for work going forward:
+1) Player and player movement 
+- Glide improvements 
+- Charging Dash
+
+2) Basic enemies and pathfinding
+- Make an abstract enemy class 
+
+3) Npc Improvements 
+4) Stage Improvements
+5) Animation issues (I dont want to deal with)
+
+Player Movement:
+1) Polish glide so it's not instant
+2) Charging dash 
+3) Better double jump w particles and sound
+
+
