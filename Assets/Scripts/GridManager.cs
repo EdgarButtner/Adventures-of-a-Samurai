@@ -1,4 +1,6 @@
+using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class GridManager : MonoBehaviour
 {
@@ -9,6 +11,8 @@ public class GridManager : MonoBehaviour
     Node[,] grid;
     float nodeDiameter;
     int gridSizeX, gridSizeY;
+
+    
 
     void Start()
     {
@@ -39,6 +43,10 @@ public class GridManager : MonoBehaviour
                 Vector2 worldPoint = gridBottomLeft + Vector2.right * (x * nodeDiameter + nodeRadius) + Vector2.up * (y * nodeDiameter + nodeRadius);
                 // To change not physics based but tileset based
                 //bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius));
+/*                 if(Tilemap.GetTile() == )
+                {
+                    
+                } */
                 bool walkable = true;
                 grid[x, y] = new Node(walkable, worldPoint);
             }
@@ -68,6 +76,13 @@ public class GridManager : MonoBehaviour
         {
             //Debug.log("x"); 
         }
+
+    }
+
+    public void Dijkstras()
+    {
+
+        //PriorityQueue<Node, int> queue = new();
 
     }
 }

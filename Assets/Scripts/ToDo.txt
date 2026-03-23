@@ -18,3 +18,4 @@ Player Movement:
 3) Better double jump w particles and sound
 
 
+Inside each I need to set the player state when checking if can perform ability
