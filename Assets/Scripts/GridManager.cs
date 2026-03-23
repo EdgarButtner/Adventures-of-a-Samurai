@@ -2,6 +2,7 @@ using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+
 public class GridManager : MonoBehaviour
 {
     [SerializeField] private Transform player;
@@ -82,7 +83,8 @@ public class GridManager : MonoBehaviour
     public void Dijkstras()
     {
 
-        //PriorityQueue<Node, int> queue = new();
+        PriorityQueue queue = new PriorityQueue();
 
     }
 }
+

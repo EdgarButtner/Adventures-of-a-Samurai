@@ -1,7 +1,11 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
 
 // Class for a priority queue, which will be used in the Dijkstra's algorithm / enemy pathfinding. 
 // Current implementation runs in O(n log n) and is not final iteration, just a placeholder for testing purposes.
-public class PriorityQueue
+public class PriorityQueue : MonoBehaviour
 { 
     private List<(Node node, int priority)> heap = new List<(Node node, int priority)>();
 
