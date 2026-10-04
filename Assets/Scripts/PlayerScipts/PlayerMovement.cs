@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using System.Collections;
 
@@ -7,7 +6,6 @@ using System.Collections;
 // Class which deals with player movement and movement abilities
 public class PlayerMovement : MonoBehaviour
 {
-    public enum PlayerState { Idle, Running, Jumping, Falling, Dashing }
     public PlayerState currentState = PlayerState.Falling;
     public GameManager gameManager;
 
@@ -29,25 +27,22 @@ public class PlayerMovement : MonoBehaviour
     public int maxJumps = 2;
     bool isJumping = false;
 
-    [Header("Dash Settings")]
-    public float dashPower = 5f;
-    public int dashDamage = 25;
-    public float dashDuration = 0.2f;
-    public float dashCooldown = 1f;
     private Vector2 moveInput;
-    private Vector2 dashDirection;
-    public bool isDashing = false;
-    private float dashTimer = 0f;
-    private float lastDashTime = -Mathf.Infinity;
 
-    [Header("Glide Settings")]
-    public int glideCharge = 100;
-    public int maxGlideCharge = 100;
-    public float glideMoveSpeed = 1.5f;
-    public float glideGravityScale = 0.5f;
-    public float minGlideFallSpeed = -2f;
-    private bool isGliding = false;
-    public Slider glideSlider;
+    // Ability which currently owns the players state, null when no ability is charging or active
+    public AbstractAbility activeAbility { get; set; }
+    private PlayerDash playerDash;
+    private PlayerGlide playerGlide;
+
+    // True while gliding, glide changes gravity and move speed but does not take over movement
+    public bool IsGliding => playerGlide != null && playerGlide.isGliding;
+
+    // True while an ability controls velocity and gravity
+    public bool MovementLocked => activeAbility != null && activeAbility.OverridesMovement;
+
+    // Used by enemies, true while an ability is hitting them and the player can not be hurt
+    public bool IsAttacking => activeAbility != null && activeAbility.IsAttacking;
+    public int AttackDamage => activeAbility != null ? activeAbility.Damage : 0;
 
     [Header("Ground Check")]
     public Transform groundCheckPos;
@@ -65,6 +60,17 @@ public class PlayerMovement : MonoBehaviour
     public float baseGravity = 2f;
     public float maxFallSpeed = 7f;
     public float fallSpeedMultiplier = 2f;
+
+    // Last ability to end, while its after ability window runs falling gravity eases back to normal
+    public AbstractAbility lastEndedAbility;
+
+    // True while the last ability to end is still in its after ability window
+    public bool InAbilityFallWindow => lastEndedAbility != null && lastEndedAbility.InAfterAbilityWindow;
+
+    // How quickly the last abilitys speed fades, horizontal eases toward normal movement and upward eases toward 0
+    // Both use the same rate so the path arcs naturally with gravity, 0 means that direction is done easing
+    public float abilityExitDeceleration = 0f;
+    public float abilityUpwardDeceleration = 0f;
 
     [Header("Wall Movement")]
     public float wallSlideSpeed = 2f;
@@ -84,13 +90,12 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        playerDash = GetComponent<PlayerDash>();
+        playerGlide = GetComponent<PlayerGlide>();
         gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 
         // Add mult while in the air
         StartCoroutine(IncrementMult());
-
-        // Decrease glide charge while gliding 
-        StartCoroutine(DecreaseGlideCharge());
     }
 
     void Update()
@@ -109,16 +114,14 @@ public class PlayerMovement : MonoBehaviour
             currMultIncrease = 1f;
             gameManager.DisplayAndResetScore();
 
-            isGliding = false;
-            animator.SetBool("isGliding", false);
-
-            // Refill glide
-            glideCharge = maxGlideCharge;
-            if (glideSlider)
-            {
-                glideSlider.value = glideCharge;
-            }
+            // End any glide and refill its charge
+            if (playerGlide != null)
+                playerGlide.OnLanded();
         }
+
+        // Let the active ability control velocity and gravity without fighting it
+        if (MovementLocked)
+            return;
 
         ApplyGravity();
 
@@ -132,66 +135,49 @@ public class PlayerMovement : MonoBehaviour
         ProcessWallSlide();
         ProcessWallJump();
 
-        // If not walljumping or dashing handle movement and flip if needed
-        if (!isWallJumping && !isDashing)
+        // If not walljumping handle movement and flip if needed
+        if (!isWallJumping)
         {
-            if (isGliding)
+            float speed = IsGliding ? playerGlide.CurrentGlideMoveSpeed : moveSpeed;
+            float targetVelocityX = horizontalMovement * speed;
+
+            // After an ability ease from its speed toward normal movement instead of snapping to it
+            // Runs until caught up rather than until the window ends, so a long slide never snaps
+            float velocityX = targetVelocityX;
+            if (abilityExitDeceleration > 0f)
             {
-                rb.linearVelocity = new Vector2(horizontalMovement * glideMoveSpeed, rb.linearVelocity.y);
-                Flip();
+                velocityX = Mathf.MoveTowards(rb.linearVelocity.x, targetVelocityX, abilityExitDeceleration * Time.deltaTime);
+
+                if (Mathf.Approximately(velocityX, targetVelocityX))
+                    abilityExitDeceleration = 0f;
             }
-            else
-            {
-                rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
-                Flip();
-            }
+
+            rb.linearVelocity = new Vector2(velocityX, rb.linearVelocity.y);
+            Flip();
         }
 
-        // If dashing update movement, animations, bools, and timer 
-        if (isDashing)
-        {
-            rb.linearVelocity = dashDirection * dashPower;
-            dashTimer -= Time.deltaTime;
-            if (dashTimer <= 0f)
-            {
-                isDashing = false;
-                rb.gravityScale = baseGravity;
-                animator.SetBool("isDashing", false);
-            }
-            return;
-        }
-
-        // Update the state
-        UpdateState();
+        // Abilities set their own state, so only update it when none are active
+        if (activeAbility == null)
+            UpdateState();
     }
 
     // Handles when to transition between each animation
     void UpdateState()
     {
-        if (isDashing)
-        {
-            currentState = PlayerState.Dashing;
-            animator.SetBool("isDashing", true);
-            return;
-        }
-
-        if (!isGrounded)
-        {
-            if (rb.linearVelocity.y > 0.1f)
-                currentState = PlayerState.Jumping;
-            else if (rb.linearVelocity.y < -0.1f)
-                currentState = PlayerState.Falling;
-        }
-        else if (Mathf.Abs(horizontalMovement) > 0.01f)
-        {
-            currentState = PlayerState.Running;
-        }
-        else
-        {
-            currentState = PlayerState.Idle;
-        }
-
+        currentState = GetMovementState();
         UpdateAnimatorParameters();
+    }
+
+    // Works out the state from movement alone, also used by abilities when they finish
+    public PlayerState GetMovementState()
+    {
+        if (!isGrounded)
+            return rb.linearVelocity.y > 0.1f ? PlayerState.Jumping : PlayerState.Falling;
+
+        if (Mathf.Abs(horizontalMovement) > 0.01f)
+            return PlayerState.Running;
+
+        return PlayerState.Idle;
     }
 
     // Updates bools and conditions for animator
@@ -200,7 +186,7 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool("isGrounded", isGrounded);
         animator.SetFloat("xVelocity", Mathf.Abs(rb.linearVelocity.x));
         animator.SetFloat("yVelocity", rb.linearVelocity.y);
-        animator.SetBool("isDashing", isDashing); 
+        animator.SetBool("isDashing", currentState == PlayerState.Dashing);
         animator.SetBool("isWallSliding", isWallSliding);
         animator.SetBool("isRunning", Mathf.Abs(horizontalMovement) > 0.01f && isGrounded);
     }
@@ -208,17 +194,27 @@ public class PlayerMovement : MonoBehaviour
     // Applies Gravity
     void ApplyGravity()
     {
-        if (isGliding)
+        // Glide handles its own gravity while active
+        if (IsGliding)
         {
-            rb.gravityScale = glideGravityScale;
+            playerGlide.ApplyGlideGravity();
+            return;
+        }
 
-            // Clamp vertical speed so you don't fall too fast
-            if (rb.
-            linearVelocity.y < minGlideFallSpeed)
-            {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, minGlideFallSpeed);
-            }
+        // Fade upward speed left over from an ability at the same rate as horizontal, gravity also pulls it down, stops once it peaks
+        if (abilityUpwardDeceleration > 0f)
+        {
+            if (rb.linearVelocity.y > 0f)
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.MoveTowards(rb.linearVelocity.y, 0f, abilityUpwardDeceleration * Time.deltaTime));
+            else
+                abilityUpwardDeceleration = 0f;
+        }
 
+        // After an ability use the eased gravity until its window ends, rising or falling, so gravity starts gentle
+        if (InAbilityFallWindow)
+        {
+            rb.gravityScale = GetAbilityFallGravity();
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, -maxFallSpeed));
             return;
         }
 
@@ -238,6 +234,39 @@ public class PlayerMovement : MonoBehaviour
         rb.gravityScale = baseGravity;
     }
 
+    // Called by abilities when they end so the fall starts gentle like the peak of a jump
+    public void OnAbilityEnded(AbstractAbility ability)
+    {
+        lastEndedAbility = ability;
+
+        // Abilities choose to ease out after this, so a cancelled one just stops
+        abilityExitDeceleration = 0f;
+        abilityUpwardDeceleration = 0f;
+
+        // Apply the starting gravity straight away so there is no frame at another gravity
+        if (InAbilityFallWindow)
+            rb.gravityScale = GetAbilityFallGravity();
+        else
+            ResetGravityScale();
+    }
+
+    // Eases gravity from the abilities starting gravity up to full fall gravity, synced to its after ability timer
+    private float GetAbilityFallGravity()
+    {
+        float startGravity = baseGravity * lastEndedAbility.gravityRampStart;
+        float fullFallGravity = baseGravity * fallSpeedMultiplier;
+
+        return Mathf.Lerp(startGravity, fullFallGravity, lastEndedAbility.AfterAbilityProgress);
+    }
+
+    // Called by abilities after they end so their speed fades out instead of stopping dead
+    // deceleration fades horizontal speed, upwardDeceleration fades upward speed, gravity is applied on top so it arcs
+    public void EaseOutOfAbility(float deceleration, float upwardDeceleration)
+    {
+        abilityExitDeceleration = deceleration;
+        abilityUpwardDeceleration = upwardDeceleration;
+    }
+
     // Moves the player
     public void Move(InputAction.CallbackContext context)
     {
@@ -248,7 +277,8 @@ public class PlayerMovement : MonoBehaviour
     // To make the player either jump or wall jump
     public void Jump(InputAction.CallbackContext context)
     {
-        if (context.performed)
+        // Can not jump while an ability controls movement
+        if (context.performed && !MovementLocked)
         {
             if (wallJumpTimer > 0f)
             {
@@ -258,17 +288,17 @@ public class PlayerMovement : MonoBehaviour
             {
                 NormalJump();
             }
-            else if (!isGrounded && !isGliding && glideCharge > 0)
+            // Out of jumps, holding jump glides instead
+            else if (playerGlide != null)
             {
-                isGliding = true;
-                animator.SetBool("isGliding", true);
+                playerGlide.Execute(context);
             }
         }
 
-        if (context.canceled && isGliding)
+        // Releasing jump ends a glide
+        if (context.canceled && playerGlide != null)
         {
-            isGliding = false;
-            animator.SetBool("isGliding", false);
+            playerGlide.Execute(context);
         }
     }
 
@@ -296,32 +326,12 @@ public class PlayerMovement : MonoBehaviour
         Invoke(nameof(CancelWallJump), wallJumpTime + 0.1f);
     }
 
-    // An 8 way Dash 
-    public void Dash(InputAction.CallbackContext context)
-    {
-        if (context.performed && !isDashing && Time.time >= lastDashTime + dashCooldown)
-        {
-            dashDirection = moveInput.normalized;
-
-            if (dashDirection != Vector2.zero)
-            {
-                isDashing = true;
-                dashTimer = dashDuration;
-                lastDashTime = Time.time;
-
-                rb.gravityScale = 0f;
-                rb.linearVelocity = dashDirection * dashPower;
-
-                // Override blend tree with dash animation
-                animator.Play("DashAttack");
-            }
-        }
-    }
-
     public void ReduceDashCooldown()
     {
         Debug.Log("Killed enemy, reset dash cooldown");
-        lastDashTime = Time.time - dashCooldown;
+
+        if (playerDash != null)
+            playerDash.ResetCooldown();
     }
 
 
@@ -396,33 +406,6 @@ public class PlayerMovement : MonoBehaviour
             }
 
             yield return new WaitForSeconds(1.75f);
-        }
-    }
-
-    IEnumerator DecreaseGlideCharge()
-    {
-        while (true)
-        {
-            if (isGliding)
-            {
-                glideCharge -= 1;
-                glideCharge = Mathf.Clamp(glideCharge, 0, maxGlideCharge);
-
-                if (glideSlider)
-                {
-                    glideSlider.maxValue = maxGlideCharge;
-                    glideSlider.value = glideCharge;
-                }
-
-                // Stop gliding if out of charge
-                if (glideCharge <= 0)
-                {
-                    isGliding = false;
-                    animator.SetBool("isGliding", false);
-                }
-            }
-
-            yield return new WaitForSeconds(0.1f);
         }
     }
 

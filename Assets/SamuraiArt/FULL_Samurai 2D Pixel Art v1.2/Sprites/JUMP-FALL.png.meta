@@ -81,7 +81,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -122,10 +122,10 @@ TextureImporter:
       name: JUMP-FALL_0
       rect:
         serializedVersion: 2
-        x: 31
-        y: 15
-        width: 28
-        height: 38
+        x: 32
+        y: 16
+        width: 26
+        height: 36
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -144,10 +144,10 @@ TextureImporter:
       name: JUMP-FALL_1
       rect:
         serializedVersion: 2
-        x: 127
-        y: 15
-        width: 28
-        height: 38
+        x: 128
+        y: 16
+        width: 26
+        height: 36
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -166,10 +166,10 @@ TextureImporter:
       name: JUMP-FALL_2
       rect:
         serializedVersion: 2
-        x: 223
-        y: 15
-        width: 28
-        height: 38
+        x: 224
+        y: 16
+        width: 26
+        height: 36
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -188,7 +188,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 99a4e1ef6f3a8b24fa8cd8201ed9f649
     internalID: 0
     vertices: []
     indices: 

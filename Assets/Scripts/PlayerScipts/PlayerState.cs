@@ -7,5 +7,6 @@ public enum PlayerState {
     Jumping = 3, 
     Falling = 4, 
     Dashing = 5,
+    Charging = 6,
     Dead = -1
     }

@@ -113,7 +113,7 @@ public class EnemyBehavior : MonoBehaviour
         }
 
         // Check if enough time has passed since last attack
-        if (Time.time - lastAttackTime >= attackCooldown && (distance <= minDistance) && !playerMovement.isDashing)
+        if (Time.time - lastAttackTime >= attackCooldown && (distance <= minDistance) && !playerMovement.IsAttacking)
         {
             lastAttackTime = Time.time;
             isAttacking = true;
@@ -179,10 +179,10 @@ public class EnemyBehavior : MonoBehaviour
     public void OnTriggerEnter2D(Collider2D col)
     {
 
-        if (col.CompareTag("Player") && playerMovement.isDashing)
+        if (col.CompareTag("Player") && playerMovement.IsAttacking)
         {
             Debug.Log("Took Damage" + currentHealth.ToString());
-            currentHealth -= playerMovement.dashDamage;
+            currentHealth -= playerMovement.AttackDamage;
             if(healthSlider) 
             {
                 healthSlider.maxValue = maxHealth;

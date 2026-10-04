@@ -49,15 +49,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "MouseDash",
-                    "type": "Button",
-                    "id": "be3ca185-7838-403b-adf6-35231aa4b2c3",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -306,22 +297,11 @@
                 {
                     "name": "",
                     "id": "463923f0-f84a-4de5-9b7b-32eb151eabe7",
-                    "path": "<Keyboard>/shift",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Dash",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "8dc9f20f-84fd-4d38-ae35-e5a5d33d7e6b",
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "MouseDash",
+                    "action": "Dash",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

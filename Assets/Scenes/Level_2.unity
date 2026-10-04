@@ -770,6 +770,8 @@ GameObject:
   - component: {fileID: 314013562}
   - component: {fileID: 314013561}
   - component: {fileID: 314013566}
+  - component: {fileID: 314013569}
+  - component: {fileID: 314013570}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -791,23 +793,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentState: 1
   gameManager: {fileID: 351050183}
+  baseMultIncrease: 1
   player: {fileID: 314013565}
   rb: {fileID: 314013563}
   moveSpeed: 7.5
   isFacingRight: 1
   jumpPower: 10
+  jumpCount: 0
   maxJumps: 2
-  dashPower: 13
-  dashDamage: 25
-  dashDuration: 0.3
-  dashCooldown: 1
-  isDashing: 0
-  glideCharge: 100
-  maxGlideCharge: 100
-  glideMoveSpeed: 2
-  glideGravityScale: 0.75
-  minGlideFallSpeed: -1
-  glideSlider: {fileID: 570769110}
   groundCheckPos: {fileID: 199464194}
   groundCheckSize: {x: 0.7, y: 0.08}
   groundLayer:
@@ -822,6 +815,9 @@ MonoBehaviour:
   baseGravity: 2
   maxFallSpeed: 7.5
   fallSpeedMultiplier: 2.5
+  lastEndedAbility: {fileID: 0}
+  abilityExitDeceleration: 0
+  abilityUpwardDeceleration: 0
   wallSlideSpeed: 2
   isWallSliding: 0
   wallJumpPower: {x: 5, y: 10}
@@ -934,9 +930,9 @@ MonoBehaviour:
     m_ActionName: 'Player/Jump[/Keyboard/w,/Keyboard/space,/Keyboard/upArrow]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 314013560}
-        m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
-        m_MethodName: Dash
+      - m_Target: {fileID: 314013569}
+        m_TargetAssemblyTypeName: PlayerDash, Assembly-CSharp
+        m_MethodName: Execute
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -952,7 +948,7 @@ MonoBehaviour:
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
-  m_Camera: {fileID: 0}
+  m_Camera: {fileID: 519420031}
 --- !u!61 &314013562
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1096,6 +1092,7 @@ Transform:
   m_Children:
   - {fileID: 199464194}
   - {fileID: 955814926}
+  - {fileID: 908420784}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &314013566
@@ -1153,6 +1150,143 @@ MonoBehaviour:
   firePoint: {fileID: 955814926}
   projectileCooldown: 3
   projectileSpeed: 10
+--- !u!114 &314013569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 314013559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c7a1b0ce8a28cf42bf1c66f9a61bca9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  afterAbilityDuration: 1
+  afterAbilityTimer: 0
+  gravityRampStart: 1
+  minDashPower: 15
+  maxDashPower: 40
+  minDashDamage: 15
+  maxDashDamage: 40
+  dashDuration: 0.2
+  dashCooldown: 0
+  dashStopByCharge:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.5
+      inSlope: 0.4002535
+      outSlope: 0.4002535
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1.000002
+      value: 0.9002543
+      inSlope: 0.4002535
+      outSlope: 0.4002535
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  longDashMomentumScale: 5
+  upwardMomentumByAngle:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 76.11562
+      value: 0.9977772
+      inSlope: -0.0005006587
+      outSlope: -0.0005006587
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.84694153
+    - serializedVersion: 3
+      time: 96.2432
+      value: 0.8703043
+      inSlope: -0.01988517
+      outSlope: -0.01988517
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.30593807
+    - serializedVersion: 3
+      time: 104.40625
+      value: 0.68640137
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  maxChargeTime: 1
+  freezePlayerWhileCharging: 1
+  dashLine: {fileID: 908420785}
+--- !u!114 &314013570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 314013559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2479a554664099349a4d971426cc6d39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  afterAbilityDuration: 0.75
+  afterAbilityTimer: 0
+  gravityRampStart: 1
+  glideCharge: 100
+  maxGlideCharge: 100
+  glideMoveSpeed: 1.5
+  glideGravityScale: 0.5
+  minGlideFallSpeed: -2
+  glideSlider: {fileID: 570769110}
+  isGliding: 0
+  glideSpeedByTime:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.8071289
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0.39097753
+      outSlope: 0.39097753
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.15833336
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &351050182
 GameObject:
   m_ObjectHideFlags: 0
@@ -3071,7 +3205,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 886251e9a18ece04ea8e61686c173e1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CameraDistance: 10
+  CameraDistance: 15
   DeadZoneDepth: 0
   Composition:
     ScreenPosition: {x: 0, y: 0}
@@ -3115,7 +3249,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 34
-    OrthographicSize: 5.5
+    OrthographicSize: 6.5
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -3142,7 +3276,7 @@ Transform:
   m_GameObject: {fileID: 456651757}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.5, y: 0, z: -10}
+  m_LocalPosition: {x: -4.5, y: 0, z: -15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3359,7 +3493,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5.5
+  orthographic size: 6.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -3384,7 +3518,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.5, y: 0, z: -10}
+  m_LocalPosition: {x: -4.5, y: 0, z: -15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7019,6 +7153,154 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &908420783
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 908420784}
+  - component: {fileID: 908420785}
+  m_Layer: 0
+  m_Name: DashLine
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &908420784
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 908420783}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 314013565}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!120 &908420785
+LineRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 908420783}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: -1152950325
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_Positions:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 1}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 1
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0.09698811
+        value: 0.061536644
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.9632107
+        value: 0.19999999
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.8584906, g: 0.23082057, b: 0.23082057, a: 1}
+      key1: {r: 0.8588236, g: 0.24313727, b: 0.24313727, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: 0
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 0
+    numCapVertices: 0
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_MaskInteraction: 0
+  m_UseWorldSpace: 1
+  m_Loop: 0
+  m_ApplyActiveColorSpace: 1
 --- !u!1 &918509824
 GameObject:
   m_ObjectHideFlags: 0

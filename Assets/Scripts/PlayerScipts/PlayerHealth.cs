@@ -44,6 +44,11 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("Player Died");
         animator.SetTrigger("Die");
 
+        // Stop any ability mid charge or dash and block new ones from starting
+        if (playerMovement.activeAbility != null)
+            playerMovement.activeAbility.Cancel();
+        playerMovement.SetPlayerState(PlayerState.Dead);
+
         // Disable movement and collisions
         playerMovement.enabled = false;
         GetComponent<Rigidbody2D>().linearVelocity  = Vector2.zero;
