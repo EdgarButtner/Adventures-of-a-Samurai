@@ -2,8 +2,8 @@ To Do:
 
 Outline for work going forward:
 1) Player and player movement 
-- Glide improvements 
-- Charging Dash
+- Glide improvements DONE
+- Charging Dash DONE
 
 2) Basic enemies and pathfinding
 - Make an abstract enemy class 
@@ -13,9 +13,9 @@ Outline for work going forward:
 5) Animation issues (I dont want to deal with)
 
 Player Movement:
-1) Polish glide so it's not instant
-2) Charging dash 
-3) Better double jump w particles and sound
+1) Polish glide so it's not instant DONE
+2) Charging dash DONE
+3) Better double jump w particles and sound 
 
 
 Inside each I need to set the player state when checking if can perform ability

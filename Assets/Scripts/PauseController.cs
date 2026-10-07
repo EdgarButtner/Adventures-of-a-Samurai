@@ -1,11 +1,18 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PauseController : MonoBehaviour
 {
     public static PauseController instance { get; private set; }
+    
+    public GameObject pauseMenu;
 
     public bool gamePaused = false;
-    
+
+    // Found automatically if empty
+    public PlayerMovement playerMovement;
+    public GameManager gameManager;
+
     // Singleton Pattern 
     private void Awake()
     {
@@ -16,6 +23,54 @@ public class PauseController : MonoBehaviour
         else 
         {
             instance = this;
+        }
+    }
+
+    private void Start()
+    {
+        if (playerMovement == null)
+            playerMovement = FindFirstObjectByType<PlayerMovement>();
+
+        if (gameManager == null)
+            gameManager = FindFirstObjectByType<GameManager>();
+
+        if (pauseMenu != null)
+        {
+            pauseMenu.SetActive(false);
+            LocationInfoPanel.HideAllUnder(pauseMenu);
+        }
+    }
+
+    // Esc toggles pause
+    public void TogglePause(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        // Ignore on level complete
+        if (gameManager != null && gameManager.isLevelCompleted)
+            return;
+
+        if (gamePaused)
+            UnpauseGame();
+        else
+            OpenPauseMenu();
+    }
+
+    // Pause with menu
+    public void OpenPauseMenu()
+    {
+        // Stop dash charge firing
+        if (playerMovement != null && playerMovement.activeAbility != null)
+            playerMovement.activeAbility.Cancel();
+
+        PauseGame();
+
+        if (pauseMenu != null)
+        {
+            // Panels start closed
+            LocationInfoPanel.HideAllUnder(pauseMenu);
+            pauseMenu.SetActive(true);
         }
     }
 
@@ -41,11 +96,14 @@ public class PauseController : MonoBehaviour
         if(!gamePaused)
             return;
 
-        // Otherwise unpause the game 
-        else 
+        if (pauseMenu != null)
         {
-            Time.timeScale = 1f;
-            gamePaused = false;
+            pauseMenu.SetActive(false);
+            LocationInfoPanel.HideAllUnder(pauseMenu);
         }
+
+        // Otherwise unpause the game
+        Time.timeScale = 1f;
+        gamePaused = false;
     }
 }

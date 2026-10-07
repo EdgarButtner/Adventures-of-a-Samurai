@@ -1,0 +1,190 @@
+﻿Game Narrative Final - Edgar Butner 
+
+
+My Project and Story Overview:
+For my final I decided to create a narrative for my game that I am making. You may remember my game from the Japan dialogue which is where I started creating it. I expanded on the world and locations as well as gameplay mechanics, as I have outlined below, but by far the most important element of this project was the creation of a detailed story. I have outlined different arc / locations which the player will travel through obtaining new moves, meeting new npcs, and learning new life lessons. 
+The player, an old japanese samurai (or similar character) while watching TV realizes that he has never traveled outside the country. He has been so focused and his life has been nothing but training that he has not really been living just going through the motions. He decides to embark on a tour of the work. The player will travel around the world to major locations learning skills such as, and moves related to skateboarding, cooking, and painting just to name a few. In each location he will meet a main npc who teaches him a unique and important life lesson. Eventually he will return home and share his knowledge and become fulfilled and content. 
+
+
+Game Ideas and Gameplay:
+This game is 2D and pixelated. The gameplay loop features the player trying to stay in the air and defeating as many enemies as possible to gain currency and complete quests. The player will venture into a generated map. Once the player has loaded in waves of enemies will start coming from all directions. More enemies and more difficult enemies will appear as the game goes on. Anytime in the wave the player can extract (described in more detail under the locations section below). With the currency earned the player can buy upgrades and abilities (possibly simple cosmetics)
+
+
+Here is a list of short bullet points for gameplay and overall game design ideas.
+
+
+* Locations:
+   * Story progresses by location and a main npc at each location
+   * Map will be a spinnable globe with cities / locations you can visit
+   * Each location / main npc will feature quests and tasks for you to complete
+   * Inside each location there will be two main places. 
+   * 1) A hub with the npc and a couple stores / places for abilities and purchasing things.
+   * 2) A generated map with waves of enemies. The player is able to extract at any time by staying within a certain radius of a point. To extract from the map the player will activate the extract (blow a whistle or something) and then a circle will form in a decently large area around them and a countdown will start until the player leaves. If the player ever leaves the circle it vanishes and the player will have to start the extract again. 
+
+
+* Abilities and Player Attributes:
+   * Player starts with a double jump, a charging dash, and a glide mechanic 
+   * Dash aimed by pointing mouse
+   * Other abilities earned later and throughout the game at different locations
+   * Other abilities include being able to throw a soccer ball
+   * Using a skateboard (there will be ramps around the map when the player unlocks it and the player can jump off)
+   * Cooking and painting abilities are also planned.
+
+
+* Enemies:
+   * Enemies will be fun but will represent societal challenges for that location
+   * Each enemy will drop cash based on how difficult they are to beat.
+   * Each enemy will have a different design and will require different tools to be them
+   * Certain enemies will need things from different regions of the game to be beaten so as you go the game evolves
+
+
+
+
+* Currency:
+   * Provides something for the player to work for / feel like they're earning something and getting something out of gameplay.
+   * Provides player agency since they are not tied to simple quests to go kill enemies.
+   * As more difficult enemies drop more money it makes the player feel like they have an incentive to go kill more difficult enemies rather than avoid them. 
+   * Provides players with a sense of progression 
+   * Can make a good couple of jokes and societal references with money involved
+   * Will most likely just be US dollars but might make a made up universal currency
+
+
+
+
+* Characters:
+        Not all of these characters will make the game but might appear in a DLC.
+
+
+* Skateboarder (Tony Hawk California)
+* Skier / Snowboarder (Canada or Nordic)
+* Cook (Popular cook)
+* Football player (European Messi Ronaldo or maybe someone else like Mbappe)
+* Mechanic (Balkan def romanian)
+* Africa idk what
+* South america idk what 
+* India / South Asian idk what
+* Musician of some kind, maybe daft punk?
+* Start with skateboarder, skier, cook, football, maybe mechanic 
+
+
+
+
+
+
+
+
+
+
+Game Locations:
+
+
+* San Francisco 
+   * Tony Hawk 
+   * Get skateboard move / weapon 
+   * Have skateboard ramps
+   * Sunny but trashy  
+   * Themes of homelessness, drug abuse, wealth disparity, etc 
+
+
+
+
+* Nordic location 
+   * Skier 
+   * Skis as a move / weapon similar to skateboard
+   * Snowy and dark but comfy 
+   * Themes of isolation, perseverance, and dealing with failure
+* 
+
+* South America (chef location)
+   * Chef
+   * Get cooking-based moves / abilities
+   * Restaurant interior as hub with kitchen tools and spices
+   * Warm and lively
+   * Themes of patience, discipline, and slowing down
+
+
+* Spain (soccer location)
+   * Football player
+   * Get soccer ball throw / kick ability
+   * Soccer fields or street-court ramps
+   * Crowded but festive
+   * Themes of teamwork, community, and support systems
+
+
+* Africa (painting location0
+   * Painter
+   * Get painting-based abilities (splatter attacks, brush glide, etc)
+   * Art studio or open-air workshop
+   *  Colorful but calm
+   * Themes of reflection, accepting your past, and emotional expression
+
+
+* Japan (final return) 
+   * No new NPC
+   * No new abilities
+   * Old home functions as final hub
+   * Quiet and nostalgic
+   * Themes of fulfillment, gratitude, and bringing lessons home
+
+
+Game Progression Outline:
+Here is a potential playthrough of the game in terms of how the story will progress. I did not include many gameplay elements as this project focuses more on story. Most of the story will be told through dialogue and some cutscenes. These lessons will not be explicitly told to the player but will be heavily suggested and inferred.
+
+
+Act 1:
+* Open to samurai in a Japanese house having breakfast. Go through a day or week eg a couple of levels or stages. 
+* Opening tutorial with basic moves and showing the player that he is not fulfilled.
+* During dinner he sees a skateboarding show and has an epiphany about life and how stuck he has been. 
+* Decides to travel and explore. First to go and try skateboarding. Thinks it will all be sunshine and rainbows 
+
+
+Act 2: 
+* Fly to San Francisco
+* Somehow meet Tony Hawk.
+* Introduce and commentary on the city 
+* Gives you a base skateboard move and teaches you how to do ramps maybe tricks?
+* Go on a couple missions and meet more people and learn to have fun and not to take life too seriously. 
+* After a while somehow see skiing move on to a nordic country after having enough money. 
+
+
+Act 3:
+* Decide to go to nordic country idk which 
+* Land and its very cold
+* Get a coat and stuff go into a random pub or hotel and find (skier tbd)
+* Get skis / snowboard 
+* Repeat cycle of going on missions meeting npcs etc
+* Have a hard time learning to ski and learn that failure is ok and you must keep on trying if you want to succeed. 
+* Decide it's time to move on
+
+
+Act 4: Go somewhere in South America and get hired as a chef 
+* Arrive and wander
+* Meet chef and get hired in restaurant 
+* Learn to cook and have a hard time with waiting and being patient with preparing food since you always tend to do things quickly. Learn that patience in necessary and valuable.
+
+
+Act 5: Go to Spain and get into soccer 
+* Arrive and have some food / initial cutscene 
+* Find some random people playing soccer/football
+* Learn teamwork and that everyone needs support structures to succeed 
+
+
+Act 6: Go to somewhere in Africa and learn to paint
+* Decide to visit africa 
+* Meet a painter when you're full of energy and tells you to calm down.
+* Paint with him reminds you of back home
+* Learn painting moves maybe do something cool with paint 
+* Learn that you must be able to let go of the past while still being able to reflect on it and accept it. That you must keep looking forward while carrying your past.
+
+
+Act 7: Go Home
+* You realize it is time for you to go back home 
+* No location here just a realization 
+
+
+Finale: Reflect on lessons learned 
+* How short life is 
+* Friends and kindness
+* Get together with everyone you met along your travels at your home\
+* Final cutscene and a final speech that ties everything together (similar to minecrafts end credits)
+* After this you will be able continue playing and unlocking new quests and traveling to each region but the story will be mostly wrapped up
