@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     int currScore = 1;
     float currMult = 1;
     public float currMaxScore;
+    public float savedBestScore;
     public float maxLevelScore = 1000;
     public bool isShowingFinalScore;
     public bool isLevelCompleted = false;
@@ -29,6 +30,12 @@ public class GameManager : MonoBehaviour
     {
         pauseController = GameObject.FindObjectOfType<PauseController>();
         SetDeathScreen(false);
+        SetLevelCompleteScreen(false);
+
+        // Best from save
+        savedBestScore = GameSession.Instance.GetBestScore(SceneManager.GetActiveScene().name);
+        if (savedBestScore > 0f && bestScoreText != null)
+            bestScoreText.text = "Best Score: " + savedBestScore.ToString();
     }
 
     // Update is called once per frame
@@ -72,7 +79,7 @@ public class GameManager : MonoBehaviour
             if (score >= maxLevelScore) 
             {
                 isLevelCompleted = true;
-                bestScoreText.text = "Best Score: " + currMaxScore.ToString();
+                bestScoreText.text = "Best Score: " + Mathf.Max(currMaxScore, savedBestScore).ToString();
                 OnLevelComplete();
             }
         }
@@ -105,20 +112,31 @@ public class GameManager : MonoBehaviour
         Application.Quit();
     }
 
-    public void LoadByName(string name) 
+    public void LoadByName(string name)
     {
-        SceneManager.LoadScene(name);
+        GameSession.Instance.LoadLevel(name);
     }
 
-    public void LoadByIndex(int index) 
+    public void LoadByIndex(int index)
     {
-        SceneManager.LoadScene(index);
+        string path = SceneUtility.GetScenePathByBuildIndex(index);
+        GameSession.Instance.LoadLevel(System.IO.Path.GetFileNameWithoutExtension(path));
     }
 
-    public void ReloadScene() 
+    public void ReloadScene()
     {
         string currentSceneName = SceneManager.GetActiveScene().name;
-        SceneManager.LoadScene(currentSceneName);
+        GameSession.Instance.LoadLevel(currentSceneName);
+    }
+
+    // Next level at current health
+    public void LoadNextLevelKeepHealth(string name)
+    {
+        PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
+        if (playerHealth != null && playerHealth.isAlive)
+            GameSession.Instance.LoadLevel(name, playerHealth.CurrentHealth);
+        else
+            GameSession.Instance.LoadLevel(name);
     }
 
     public void OnPlayerDeath() 
@@ -131,10 +149,18 @@ public class GameManager : MonoBehaviour
         deathScreen.SetActive(toSet);
     }
 
-    public void OnLevelComplete() 
+    public void SetLevelCompleteScreen(bool toSet)
+    {
+        levelCompletedScreen.SetActive(toSet);
+    }
+
+    public void OnLevelComplete()
     {
         isLevelCompleted = true;
-        levelCompletedScreen.SetActive(true);
+        SetLevelCompleteScreen(true);
+
+        // Record and save
+        GameSession.Instance.CompleteLevel(SceneManager.GetActiveScene().name, currMaxScore);
 
         pauseController.PauseGame();
     }   

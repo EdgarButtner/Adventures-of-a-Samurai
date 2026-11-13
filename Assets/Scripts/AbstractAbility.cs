@@ -78,6 +78,10 @@ public abstract class AbstractAbility : MonoBehaviour
     // A basic check which most abilities can use.
     protected bool BaseStateCheck()
     {
+        // No starting while paused
+        if (PauseController.IsPaused)
+            return false;
+
         bool baseStates = player.currentState switch
         {
             PlayerState.Idle => true,

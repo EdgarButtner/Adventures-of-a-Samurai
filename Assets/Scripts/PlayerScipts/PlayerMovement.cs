@@ -277,8 +277,8 @@ public class PlayerMovement : MonoBehaviour
     // To make the player either jump or wall jump
     public void Jump(InputAction.CallbackContext context)
     {
-        // Can not jump while an ability controls movement
-        if (context.performed && !MovementLocked)
+        // Can not jump while an ability controls movement or paused
+        if (context.performed && !MovementLocked && !PauseController.IsPaused)
         {
             if (wallJumpTimer > 0f)
             {

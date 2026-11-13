@@ -16,10 +16,21 @@ public class PlayerHealth : MonoBehaviour
     private Animator animator;
     private GameManager gameManager;
 
+    public int CurrentHealth => currentHealth;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        currentHealth = maxHealth;
+        // Health from session
+        if (GameSession.Instance != null)
+        {
+            maxHealth = GameSession.Instance.data.player.maxHealth;
+            currentHealth = GameSession.Instance.TakeStartHealth(maxHealth);
+        }
+        else
+        {
+            currentHealth = maxHealth;
+        }
         isAlive = true;
 
         playerMovement = GetComponent<PlayerMovement>();

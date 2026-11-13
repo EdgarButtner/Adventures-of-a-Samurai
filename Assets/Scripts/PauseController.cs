@@ -9,6 +9,9 @@ public class PauseController : MonoBehaviour
 
     public bool gamePaused = false;
 
+    // Gameplay input ignored while true
+    public static bool IsPaused => instance != null && instance.gamePaused;
+
     // Found automatically if empty
     public PlayerMovement playerMovement;
     public GameManager gameManager;

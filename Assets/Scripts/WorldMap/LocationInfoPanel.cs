@@ -11,12 +11,14 @@ public class LocationInfoPanel : MonoBehaviour
     public Button travelButton;
     public Button closeButton;
 
-    // Up and right of the marker
-    public Vector2 offsetFromMarker = new Vector2(20f, 20f);
+    // Found or added automatically
+    public ResponsivePanelSize panelSize;
+    public PanelPlacer panelPlacer;
 
     private MapLocation currentLocation;
-    private RectTransform rectTransform;
     private RectTransform markerRect;
+    private bool movedToLayer = false;
+    private Vector2 lastCanvasSize;
 
     // Only one open
     private static LocationInfoPanel openPanel;
@@ -25,10 +27,15 @@ public class LocationInfoPanel : MonoBehaviour
 
     void Awake()
     {
-        rectTransform = GetComponent<RectTransform>();
+        if (panelSize == null)
+            panelSize = GetComponent<ResponsivePanelSize>();
+        if (panelSize == null)
+            panelSize = gameObject.AddComponent<ResponsivePanelSize>();
 
-        // Grows up and right
-        rectTransform.pivot = Vector2.zero;
+        if (panelPlacer == null)
+            panelPlacer = GetComponent<PanelPlacer>();
+        if (panelPlacer == null)
+            panelPlacer = gameObject.AddComponent<PanelPlacer>();
 
         if (travelButton != null)
             travelButton.onClick.AddListener(Travel);
@@ -46,18 +53,21 @@ public class LocationInfoPanel : MonoBehaviour
         openPanel = this;
         currentLocation = location;
         markerRect = location.transform as RectTransform;
-        gameObject.SetActive(true);
-        PlaceNearMarker();
 
-        // Blank keeps styled text
+        MoveToPanelLayer(location);
+        gameObject.SetActive(true);
+
+        // Text first, size depends on it
         if (nameText != null && !string.IsNullOrEmpty(location.locationName))
             nameText.text = location.locationName;
 
         if (descriptionText != null && !string.IsNullOrEmpty(location.description))
             descriptionText.text = location.description;
+
+        Resize();
+        panelPlacer.PlaceBeside(markerRect);
     }
 
-    // Follow the marker
     void LateUpdate()
     {
         // Close once behind the globe
@@ -67,16 +77,35 @@ public class LocationInfoPanel : MonoBehaviour
             return;
         }
 
-        PlaceNearMarker();
+        // Resize when the screen changes
+        RectTransform canvasRect = panelSize.CanvasRect;
+        if (canvasRect != null && canvasRect.rect.size != lastCanvasSize)
+            Resize();
+
+        // Follow the marker
+        panelPlacer.PlaceBeside(markerRect);
     }
 
-    private void PlaceNearMarker()
+    private void Resize()
     {
-        if (markerRect == null || markerRect.parent == null)
-            return;
+        panelSize.Apply();
 
-        Vector3 localPoint = markerRect.localPosition + (Vector3)offsetFromMarker;
-        rectTransform.position = markerRect.parent.TransformPoint(localPoint);
+        RectTransform canvasRect = panelSize.CanvasRect;
+        if (canvasRect != null)
+            lastCanvasSize = canvasRect.rect.size;
+    }
+
+    // Above the globe and markers
+    private void MoveToPanelLayer(MapLocation location)
+    {
+        if (!movedToLayer && location.globe != null && location.globe.PanelLayer != null)
+        {
+            transform.SetParent(location.globe.PanelLayer, false);
+            movedToLayer = true;
+        }
+
+        // Newest on top
+        transform.SetAsLastSibling();
     }
 
     // Hides every panel under root
@@ -117,11 +146,6 @@ public class LocationInfoPanel : MonoBehaviour
         if (currentLocation == null || string.IsNullOrEmpty(currentLocation.sceneName))
             return;
 
-        // Unpause before leaving
-        if (PauseController.instance != null)
-            PauseController.instance.UnpauseGame();
-
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(currentLocation.sceneName);
+        GameSession.Instance.LoadLevel(currentLocation.sceneName);
     }
 }

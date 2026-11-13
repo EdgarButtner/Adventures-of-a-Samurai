@@ -19,13 +19,14 @@ public class UIManager : MonoBehaviour
         Application.Quit();
     }
 
-    public void LoadByName(string name) 
+    public void LoadByName(string name)
     {
-        SceneManager.LoadScene(name);
+        GameSession.Instance.LoadLevel(name);
     }
 
-    public void LoadByIndex(int index) 
+    public void LoadByIndex(int index)
     {
-        SceneManager.LoadScene(index);
+        string path = SceneUtility.GetScenePathByBuildIndex(index);
+        GameSession.Instance.LoadLevel(System.IO.Path.GetFileNameWithoutExtension(path));
     }
 }

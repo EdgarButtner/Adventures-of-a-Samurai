@@ -37,6 +37,9 @@ public class WorldMapGlobe : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     // Globe size inside the frame
     [Range(0f, 1f)] public float radiusScale = 0.95f;
 
+    // Open panels go here, globe parent if empty
+    public RectTransform panelLayer;
+
     // Current angle
     public float rotation = 0f;
 
@@ -54,6 +57,8 @@ public class WorldMapGlobe : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     public float Radius => rectTransform.rect.width * 0.5f * radiusScale;
 
     public float MarkerDirection => invertMarkers ? -1f : 1f;
+
+    public RectTransform PanelLayer => panelLayer != null ? panelLayer : transform.parent as RectTransform;
 
     // Held while timer runs or a panel is open
     public bool IsHolding => holdTimer > 0f || LocationInfoPanel.IsAnyOpen;
@@ -91,6 +96,10 @@ public class WorldMapGlobe : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     public void HidePanels()
     {
         LocationInfoPanel.HideAllUnder(gameObject);
+
+        // Panels move here once opened
+        if (PanelLayer != null)
+            LocationInfoPanel.HideAllUnder(PanelLayer.gameObject);
     }
 
     // Stops idle spin for a while
