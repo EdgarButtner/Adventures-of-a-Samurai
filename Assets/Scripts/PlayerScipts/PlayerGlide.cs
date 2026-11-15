@@ -61,7 +61,6 @@ public class PlayerGlide : AbstractAbility
         {
             glideTimer = 0f;
             isGliding = true;
-            animator.SetBool("isGliding", true);
         }
 
         if (context.canceled && isGliding)
@@ -110,7 +109,6 @@ public class PlayerGlide : AbstractAbility
     private void StopGlide()
     {
         isGliding = false;
-        animator.SetBool("isGliding", false);
     }
 
     private void UpdateGlideSlider()

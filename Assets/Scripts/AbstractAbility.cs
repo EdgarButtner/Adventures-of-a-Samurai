@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 // players activeAbility, which tells PlayerMovement and other abilities who owns the current state.
 // Once the ability is over it releases ownership and the state goes back to grounded or in air.
 
-[RequireComponent(typeof(PlayerMovement), typeof(Rigidbody2D), typeof(Animator))]
+[RequireComponent(typeof(PlayerMovement), typeof(Rigidbody2D))]
 public abstract class AbstractAbility : MonoBehaviour
 {
     [Header("After Ability")]
@@ -25,7 +25,6 @@ public abstract class AbstractAbility : MonoBehaviour
 
     protected PlayerMovement player;
     protected Rigidbody2D rb;
-    protected Animator animator;
 
     // True while the ability has recently ended
     public bool InAfterAbilityWindow => afterAbilityTimer > 0f;
@@ -49,7 +48,6 @@ public abstract class AbstractAbility : MonoBehaviour
     {
         player = GetComponent<PlayerMovement>();
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
     }
 
     // Abilities that need their own Update must override this and call base.Update() so the timer keeps ticking
@@ -82,7 +80,7 @@ public abstract class AbstractAbility : MonoBehaviour
         if (PauseController.IsPaused)
             return false;
 
-        bool baseStates = player.currentState switch
+        bool baseStates = player.CurrentState switch
         {
             PlayerState.Idle => true,
             PlayerState.Running => true,

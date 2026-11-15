@@ -1,12 +1,21 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 using System.Collections;
 
 
 // Class which deals with player movement and movement abilities
+[RequireComponent(typeof(Rigidbody2D), typeof(PlayerAnimController))]
 public class PlayerMovement : MonoBehaviour
 {
-    public PlayerState currentState = PlayerState.Falling;
+    // Only changed through SetPlayerState
+    [SerializeField] private PlayerState currentState = PlayerState.Falling;
+    public PlayerState CurrentState => currentState;
+
+    // Previous then new state
+    public event Action<PlayerState, PlayerState> StateChanged;
+    public bool logStateChanges = false;
+
     public GameManager gameManager;
 
     [Header("General Settings")]
@@ -14,12 +23,13 @@ public class PlayerMovement : MonoBehaviour
     public float baseMultIncrease = 1f;
     public Transform player;
     public Rigidbody2D rb;
-    Animator animator;
+
+    // Animation and facing
+    public PlayerAnimController Anim { get; private set; }
 
     [Header("Movement Settings")]
     public float moveSpeed = 3f;
     float horizontalMovement;
-    public bool isFacingRight = true;
 
     [Header("Jump Settings")]
     public float jumpPower = 5f;
@@ -86,12 +96,21 @@ public class PlayerMovement : MonoBehaviour
     [Header("Grid Settings")]
     public float gridboundx, gridboundy;
 
-    void Start()
+    // Own components
+    void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+        Anim = GetComponent<PlayerAnimController>();
         playerDash = GetComponent<PlayerDash>();
         playerGlide = GetComponent<PlayerGlide>();
+
+        // Smooth movement between physics steps
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+    }
+
+    // Other objects
+    void Start()
+    {
         gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 
         // Add mult while in the air
@@ -109,7 +128,6 @@ public class PlayerMovement : MonoBehaviour
         {
             jumpCount = 0;
             isJumping = false;
-            animator.SetBool("isJumping", false);
 
             currMultIncrease = 1f;
             gameManager.DisplayAndResetScore();
@@ -125,12 +143,9 @@ public class PlayerMovement : MonoBehaviour
 
         ApplyGravity();
 
-        // If in jumping state and falling turn of jumping animation and set isJumping to false
+        // Jump ends once falling
         if (rb.linearVelocity.y <= 0 && isJumping)
-        {
             isJumping = false;
-            animator.SetBool("isJumping", false);
-        }
 
         ProcessWallSlide();
         ProcessWallJump();
@@ -153,7 +168,7 @@ public class PlayerMovement : MonoBehaviour
             }
 
             rb.linearVelocity = new Vector2(velocityX, rb.linearVelocity.y);
-            Flip();
+            Anim.FaceDirection(horizontalMovement);
         }
 
         // Abilities set their own state, so only update it when none are active
@@ -161,34 +176,27 @@ public class PlayerMovement : MonoBehaviour
             UpdateState();
     }
 
-    // Handles when to transition between each animation
+    // Movement state when no ability owns it
     void UpdateState()
     {
-        currentState = GetMovementState();
-        UpdateAnimatorParameters();
+        // Dead is final
+        if (currentState == PlayerState.Dead)
+            return;
+
+        SetPlayerState(GetMovementState());
     }
 
     // Works out the state from movement alone, also used by abilities when they finish
     public PlayerState GetMovementState()
     {
-        if (!isGrounded)
+        // isJumping covers frames the ground check still overlaps
+        if (!isGrounded || isJumping)
             return rb.linearVelocity.y > 0.1f ? PlayerState.Jumping : PlayerState.Falling;
 
         if (Mathf.Abs(horizontalMovement) > 0.01f)
             return PlayerState.Running;
 
         return PlayerState.Idle;
-    }
-
-    // Updates bools and conditions for animator
-    void UpdateAnimatorParameters()
-    {
-        animator.SetBool("isGrounded", isGrounded);
-        animator.SetFloat("xVelocity", Mathf.Abs(rb.linearVelocity.x));
-        animator.SetFloat("yVelocity", rb.linearVelocity.y);
-        animator.SetBool("isDashing", currentState == PlayerState.Dashing);
-        animator.SetBool("isWallSliding", isWallSliding);
-        animator.SetBool("isRunning", Mathf.Abs(horizontalMovement) > 0.01f && isGrounded);
     }
 
     // Applies Gravity
@@ -308,7 +316,6 @@ public class PlayerMovement : MonoBehaviour
         jumpCount++;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpPower);
         isJumping = true;
-        animator.SetBool("isJumping", true);
     }
 
     // Handles WallJumps
@@ -317,11 +324,10 @@ public class PlayerMovement : MonoBehaviour
         isWallJumping = true;
         isJumping = true;
         rb.linearVelocity = new Vector2(wallJumpDirection * wallJumpPower.x, wallJumpPower.y);
-        animator.SetBool("isJumping", true);
         wallJumpTimer = 0;
 
-        if (transform.localScale.x != wallJumpDirection)
-            Flip();
+        // Face away from wall
+        Anim.FaceDirection(wallJumpDirection);
 
         Invoke(nameof(CancelWallJump), wallJumpTime + 0.1f);
     }
@@ -354,7 +360,7 @@ public class PlayerMovement : MonoBehaviour
         if (isWallSliding)
         {
             isWallJumping = false;
-            wallJumpDirection = -transform.localScale.x;
+            wallJumpDirection = -Anim.FacingSign;
             wallJumpTimer = wallJumpTime;
             CancelInvoke(nameof(CancelWallJump));
         }
@@ -375,18 +381,6 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // -----------------------------------------------------------------------------------------
-
-    // Flips the player sprite
-    public void Flip()
-    {
-        if (isFacingRight && horizontalMovement < 0 || !isFacingRight && horizontalMovement > 0)
-        {
-            isFacingRight = !isFacingRight;
-            Vector3 ls = transform.localScale;
-            ls.x *= -1f;
-            transform.localScale = ls;
-        }
-    }
 
     // Checks if the player is grounded using a box
     private bool IsGrounded()
@@ -409,12 +403,19 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Sets the currentPlayerState to the given PlayerState
+    // The only place state changes, listeners follow it
     public void SetPlayerState(PlayerState state)
     {
+        if (state == currentState)
+            return;
+
         PlayerState prevState = currentState;
         currentState = state;
-        Debug.Log($"PlayerState changed from {prevState} to {currentState}");
+
+        if (logStateChanges)
+            Debug.Log($"PlayerState changed from {prevState} to {currentState}");
+
+        StateChanged?.Invoke(prevState, currentState);
     }
 
     private void OnDrawGizmos()

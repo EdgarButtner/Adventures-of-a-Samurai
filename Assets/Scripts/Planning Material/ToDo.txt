@@ -4,6 +4,7 @@ Outline for work going forward:
 1) Player and player movement 
 - Glide improvements DONE
 - Charging Dash DONE
+- Slider for the dash charge / held for too long causes dash to fail.
 
 2) Basic enemies and pathfinding
 - Make an abstract enemy class 
@@ -17,5 +18,3 @@ Player Movement:
 2) Charging dash DONE
 3) Better double jump w particles and sound 
 
-
-Inside each I need to set the player state when checking if can perform ability

@@ -13,7 +13,6 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("References")]
     private PlayerMovement playerMovement;
-    private Animator animator;
     private GameManager gameManager;
 
     public int CurrentHealth => currentHealth;
@@ -34,7 +33,6 @@ public class PlayerHealth : MonoBehaviour
         isAlive = true;
 
         playerMovement = GetComponent<PlayerMovement>();
-        animator = GetComponent<Animator>();
         gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 
         UpdateHealthSlider();
@@ -53,9 +51,9 @@ public class PlayerHealth : MonoBehaviour
     public void Die() 
     {
         Debug.Log("Player Died");
-        animator.SetTrigger("Die");
 
         // Stop any ability mid charge or dash and block new ones from starting
+        // Dead state plays the death animation
         if (playerMovement.activeAbility != null)
             playerMovement.activeAbility.Cancel();
         playerMovement.SetPlayerState(PlayerState.Dead);

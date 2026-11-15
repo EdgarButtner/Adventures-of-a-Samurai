@@ -38,7 +38,21 @@ public class PlayerDash : AbstractAbility
     // Line shown while charging, it points at the mouse and its length is how far the dash will go
     public LineRenderer dashLine;
 
+    // Optional sprite on the player, aims like the line
+    public Sprite dashLineSprite;
+
+    // Sprite art should point right
+    public bool rotateDashSprite = true;
+    public float dashSpriteScale = 1f;
+
+    // Length matches dash distance, needs a left edge pivot
+    public bool stretchDashSprite = false;
+
+    // Draw order above the line
+    public int dashSpriteSortingOffset = 1;
+
     // Private fields
+    private SpriteRenderer dashSpriteRenderer;
     private Vector2 dashDirection;
     private float currentDashPower;
     private int currentDashDamage;
@@ -169,6 +183,8 @@ public class PlayerDash : AbstractAbility
             return;
         }
 
+        SetPlayerDirection();
+
         // Set fields properly to handle state etc
         player.SetPlayerState(PlayerState.Dashing);
         isCharging = false;
@@ -180,10 +196,6 @@ public class PlayerDash : AbstractAbility
         rb.gravityScale = 0f;
         rb.linearVelocity = dashDirection * currentDashPower;
 
-        // Override blend tree with dash animation
-        animator.SetBool("isDashing", true);
-        animator.Play("DashAttack");
-
         Debug.Log($"Dashing with power: {currentDashPower}, damage: {currentDashDamage}");
     }
 
@@ -191,7 +203,6 @@ public class PlayerDash : AbstractAbility
     {
         isCharging = false;
         isDashing = false;
-        animator.SetBool("isDashing", false);
 
         // Carry on with exactly the dash velocity so nothing snaps, and nothing from before the dash leaks in
         rb.linearVelocity = dashDirection * currentDashPower;
@@ -237,7 +248,6 @@ public class PlayerDash : AbstractAbility
 
         isCharging = false;
         isDashing = false;
-        animator.SetBool("isDashing", false);
         SetDashLineVisible(false);
         EndAbility();
         Debug.Log("Dash Cancelled");
@@ -246,23 +256,79 @@ public class PlayerDash : AbstractAbility
     // Points the aim line at the mouse with the length the dash would travel right now
     private void UpdateDashLine()
     {
-        if (dashLine == null)
-            return;
-
         // No gravity during the dash so distance is just speed times time
         float dashDistance = currentDashPower * dashDuration;
+        Vector2 direction = GetMouseDirection();
         Vector2 start = transform.position;
-        Vector2 end = start + GetMouseDirection() * dashDistance;
+        Vector2 end = start + direction * dashDistance;
 
-        dashLine.positionCount = 2;
-        dashLine.SetPosition(0, start);
-        dashLine.SetPosition(1, end);
+        if (dashLine != null)
+        {
+            dashLine.positionCount = 2;
+            dashLine.SetPosition(0, start);
+            dashLine.SetPosition(1, end);
+        }
+
+        UpdateDashSprite(start, end, direction);
+    }
+
+    // Centers the sprite on the player and aims it
+    private void UpdateDashSprite(Vector2 start, Vector2 end, Vector2 direction)
+    {
+        if (dashLineSprite == null)
+        {
+            if (dashSpriteRenderer != null)
+                dashSpriteRenderer.enabled = false;
+            return;
+        }
+
+        if (dashSpriteRenderer == null)
+            CreateDashSprite();
+
+        // Picks up Inspector changes
+        dashSpriteRenderer.sprite = dashLineSprite;
+        dashSpriteRenderer.enabled = true;
+
+        if (dashLine != null)
+        {
+            dashSpriteRenderer.sortingLayerID = dashLine.sortingLayerID;
+            dashSpriteRenderer.sortingOrder = dashLine.sortingOrder + dashSpriteSortingOffset;
+        }
+
+        Transform spriteTransform = dashSpriteRenderer.transform;
+        spriteTransform.position = start;
+
+        Vector3 scale = Vector3.one * dashSpriteScale;
+        float spriteLength = dashLineSprite.bounds.size.x;
+        if (stretchDashSprite && spriteLength > 0f)
+            scale.x = Vector2.Distance(start, end) / spriteLength;
+        spriteTransform.localScale = scale;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        spriteTransform.rotation = rotateDashSprite ? Quaternion.Euler(0f, 0f, angle) : Quaternion.identity;
+    }
+
+    // Not parented so player flips dont mirror it
+    private void CreateDashSprite()
+    {
+        GameObject spriteObject = new GameObject("DashLineSprite");
+        dashSpriteRenderer = spriteObject.AddComponent<SpriteRenderer>();
+        dashSpriteRenderer.enabled = false;
     }
 
     private void SetDashLineVisible(bool visible)
     {
         if (dashLine != null)
             dashLine.enabled = visible;
+
+        if (dashSpriteRenderer != null)
+            dashSpriteRenderer.enabled = visible && dashLineSprite != null;
+    }
+
+    void OnDestroy()
+    {
+        if (dashSpriteRenderer != null)
+            Destroy(dashSpriteRenderer.gameObject);
     }
 
     private Vector2 GetMouseDirection()
@@ -277,5 +343,12 @@ public class PlayerDash : AbstractAbility
         Vector2 direction = ((Vector2)mouseWorldPos - (Vector2)transform.position).normalized;
 
         return direction;
+    }
+
+    // Sets the player's facing direction based on the dash direction
+    private void SetPlayerDirection()
+    {
+        // Straight up or down keeps current facing
+        player.Anim.FaceDirection(dashDirection.x);
     }
 }
